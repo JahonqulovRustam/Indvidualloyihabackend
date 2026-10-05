@@ -1,10 +1,13 @@
 package com.medicore.hms.service;
 
+import com.medicore.hms.exception.ResourceNotFoundException;
 import com.medicore.hms.model.Patient;
 import com.medicore.hms.repository.PatientRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 
 @Service
@@ -17,14 +20,17 @@ public class PatientService {
         return repository.findAll();
     }
 
+    public Page<Patient> getAllPatientsPaged(Pageable pageable) {
+        return repository.findAll(pageable);
+    }
+
     public Patient createPatient(Patient patient) {
         return repository.save(patient);
     }
 
     public Patient getPatientById(Long id) {
-        // BUG FIX: orElseThrow() o'rniga aniq xato xabari
         return repository.findById(id)
-                .orElseThrow(() -> new EntityNotFoundException("Patient not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Patient not found with id: " + id));
     }
 
     public Patient updatePatient(Long id, Patient patientDetails) {
@@ -32,8 +38,6 @@ public class PatientService {
         patient.setFullName(patientDetails.getFullName());
         patient.setContactInfo(patientDetails.getContactInfo());
         patient.setAllergies(patientDetails.getAllergies());
-        // BUG FIX: "// Update other fields..." comment qoldirilgan edi,
-        // qolgan maydonlar ham yangilanmagan edi
         patient.setDateOfBirth(patientDetails.getDateOfBirth());
         patient.setGender(patientDetails.getGender());
         patient.setBloodGroup(patientDetails.getBloodGroup());
@@ -41,6 +45,9 @@ public class PatientService {
     }
 
     public void deletePatient(Long id) {
+        if (!repository.existsById(id)) {
+            throw new ResourceNotFoundException("Patient not found with id: " + id);
+        }
         repository.deleteById(id);
     }
 }

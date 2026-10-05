@@ -17,18 +17,14 @@ public class DataInitializer {
     @Bean
     public CommandLineRunner seedUsers() {
         return args -> {
-            // ensure admin exists with known password
-            repository.findByUsername("admin").ifPresentOrElse(user -> {
-                user.setPassword(passwordEncoder.encode("Admin@123"));
-                repository.save(user);
-            }, () -> {
+            if (repository.findByUsername("admin").isEmpty()) {
                 repository.save(User.builder()
                         .username("admin")
                         .password(passwordEncoder.encode("Admin@123"))
                         .fullName("Administrator")
                         .role(User.Role.ADMIN)
                         .build());
-            });
+            }
 
             if (repository.findByUsername("doctor1").isEmpty()) {
                 repository.save(User.builder()

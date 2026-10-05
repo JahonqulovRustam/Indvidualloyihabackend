@@ -4,7 +4,11 @@ import com.medicore.hms.dto.AppointmentRequest;
 import com.medicore.hms.dto.AppointmentResponse;
 import com.medicore.hms.model.Appointment;
 import com.medicore.hms.service.AppointmentService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,22 +21,27 @@ public class AppointmentController {
     private final AppointmentService service;
 
     @GetMapping
-    public List<AppointmentResponse> getAll() {
-        return service.getAllAppointments();
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE', 'CASHIER')")
+    public ResponseEntity<List<AppointmentResponse>> getAll() {
+        return ResponseEntity.ok(service.getAllAppointments());
     }
 
     @PostMapping
-    public AppointmentResponse create(@RequestBody AppointmentRequest request) {
-        return service.createAppointment(request);
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<AppointmentResponse> create(@Valid @RequestBody AppointmentRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createAppointment(request));
     }
 
     @PatchMapping("/{id}/status")
-    public AppointmentResponse updateStatus(@PathVariable Long id, @RequestParam Appointment.Status status) {
-        return service.updateStatus(id, status);
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<AppointmentResponse> updateStatus(@PathVariable Long id, @RequestParam Appointment.Status status) {
+        return ResponseEntity.ok(service.updateStatus(id, status));
     }
 
     @DeleteMapping("/{id}")
-    public void delete(@PathVariable Long id) {
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
         service.deleteAppointment(id);
+        return ResponseEntity.noContent().build();
     }
 }

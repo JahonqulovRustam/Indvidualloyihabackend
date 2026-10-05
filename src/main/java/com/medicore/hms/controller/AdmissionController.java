@@ -3,7 +3,11 @@ package com.medicore.hms.controller;
 import com.medicore.hms.dto.AdmissionRequest;
 import com.medicore.hms.model.Admission;
 import com.medicore.hms.service.AdmissionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -16,22 +20,26 @@ public class AdmissionController {
     private final AdmissionService service;
 
     @GetMapping
-    public List<Admission> getAll() {
-        return service.getAllAdmissions();
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<List<Admission>> getAll() {
+        return ResponseEntity.ok(service.getAllAdmissions());
     }
 
     @GetMapping("/ward/{wardId}")
-    public List<Admission> getActiveByWard(@PathVariable Long wardId) {
-        return service.getActiveAdmissionsByWard(wardId);
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<List<Admission>> getActiveByWard(@PathVariable Long wardId) {
+        return ResponseEntity.ok(service.getActiveAdmissionsByWard(wardId));
     }
 
     @PostMapping
-    public Admission create(@RequestBody AdmissionRequest request) {
-        return service.createAdmission(request);
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<Admission> create(@Valid @RequestBody AdmissionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.createAdmission(request));
     }
 
     @PatchMapping("/{id}/discharge")
-    public Admission discharge(@PathVariable Long id, @RequestBody AdmissionRequest request) {
-        return service.dischargePatient(id, request);
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCTOR', 'NURSE')")
+    public ResponseEntity<Admission> discharge(@PathVariable Long id, @RequestBody(required = false) AdmissionRequest request) {
+        return ResponseEntity.ok(service.dischargePatient(id, request));
     }
 }
